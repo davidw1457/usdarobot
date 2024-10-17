@@ -1,0 +1,11 @@
+{
+    "sqltools.useNodeRuntime": true,
+    "sqltools.connections": [
+        {
+            "previewLimit": 5000,
+            "driver": "SQLite",
+            "name": "usdarecallbotdb",
+            "database": "/home/david/.usdarecallbot/urb.db"
+        }
+    ]
+}
