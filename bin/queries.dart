@@ -86,4 +86,6 @@ const selectToPost = '''SELECT
 FROM recalls
 WHERE
   Langcode = 'English'
-  AND uri IS NULL;''';
+  AND uri IS NULL
+  AND (Recall_Date >= '###DATE###'
+    OR Last_Modified_Date >= '###DATE###');''';

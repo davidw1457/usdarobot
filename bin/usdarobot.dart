@@ -198,18 +198,24 @@ Future<int> _postUpdates(Database db) async {
   var posted = 0;
   final ResultSet results;
   try {
-    results = db.select(qry.selectToPost);
+    final threshold = DateTime.now().subtract(const Duration(days: 7));
+    final year = '${threshold.year}';
+    final month = '${threshold.month}'.padLeft(2, '0');
+    final day = '${threshold.day}'.padLeft(2, '0');
+    final thresholdStr = '$year-$month-$day';
+    final qrySelectToPost = qry.selectToPost.replaceAll('###DATE###', thresholdStr);
+    results = db.select(qrySelectToPost);
   } catch (e) {
     print('_postUpdates: $e');
     rethrow;
   }
 
-  // final session = await at.createSession(
-  //   identifier: cred.username,
-  //   password: cred.password,
-  // );
+  final session = await at.createSession(
+    identifier: cred.username,
+    password: cred.password,
+  );
 
-  // final bskysesh = bsky.Bluesky.fromSession(session.data);
+  final bskysesh = bsky.Bluesky.fromSession(session.data);
 
   for (final r in results) {
     if (r['Title'] == null || r['Title'] == '') {
@@ -234,20 +240,38 @@ Future<int> _postUpdates(Database db) async {
         }
 
         final facets = await s.entities.toFacets();
-        // final strongRef = await bskysesh.feed.post(
-        //     text: post.value,
-        //     reply: reply,
-        //     facets: facets.map(bsky.Facet.fromJson).toList());
-        // titlerefs.add(strongRef.data);
+        final strongRef = await bskysesh.feed.post(
+            text: post.value,
+            reply: reply,
+            facets: facets.map(bsky.Facet.fromJson).toList());
+        titlerefs.add(strongRef.data);
 
         ++posted;
         print(post.value);
       }
     }
+    _updateRecall(r['Recall_Number'], titlerefs.first.cid, titlerefs.first.uri.href, db);
   }
 
   return posted;
 }
+
+void _updateRecall(String recallNumber, String cid, String uri, Database db) {
+  final updateQuery = '''UPDATE recalls
+SET
+  uri = '$uri',
+  cid = '$cid'
+WHERE
+  Recall_Number = '$recallNumber';''';
+  try {
+    db.execute(updateQuery);
+  } on SqliteException catch(e) {
+    print('_updateRecall: $e');
+    print(updateQuery);
+    rethrow;
+  }
+}
+  
 
 bskytxt.BlueskyText _createPost(List<List<String>> titles, Row r) {
   StringBuffer postText = StringBuffer();
