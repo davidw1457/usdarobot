@@ -241,7 +241,7 @@ Future<int> _postUpdates(Database db) async {
 
         final facets = await s.entities.toFacets();
         final strongRef = await bskysesh.feed.post(
-            text: post.value,
+            text: s.value,
             reply: reply,
             facets: facets.map(bsky.Facet.fromJson).toList());
         titlerefs.add(strongRef.data);
